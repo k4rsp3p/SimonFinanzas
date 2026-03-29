@@ -270,7 +270,7 @@ function processWithGemini(transcript){
   var catList=categories.join(', ');
   var prompt='Eres un asistente de finanzas personales. Analiza este texto en español y extrae la información de un movimiento financiero.\n\nTexto: "'+transcript+'"\n\nCategorías disponibles: '+catList+'\n\nResponde ÚNICAMENTE con un JSON válido con esta estructura (sin markdown, sin explicaciones):\n{"type":"gasto o ingreso","amount":número,"category":"categoría","description":"descripción corta"}\n\nReglas:\n- gasté/pagué/compré → gasto. recibí/gané/me pagaron → ingreso\n- Convierte palabras a números: cincuenta mil → 50000\n- Si no hay monto claro pon 0\n- Usa la categoría más cercana de la lista';
 
-  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+geminiKey,{
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key='+geminiKey,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
