@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon-192.svg">
+  <title>Simon Finanzas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>Simon Finanzas</h1>
+      <div class="month-controls">
+        <button id="btn-prev" class="icon-btn">&#9664;</button>
+        <span id="current-month"></span>
+        <button id="btn-next" class="icon-btn">&#9654;</button>
+      </div>
+      <div class="day-filter">
+        <button class="day-btn active" id="btn-todo-mes">Todo el mes</button>
+        <input type="number" id="inp-dia" min="1" max="31" placeholder="Día (1-31)">
+        <button class="day-btn" id="btn-buscar-dia">Buscar día</button>
+      </div>
+    </div>
+    <div class="summary">
+      <div class="summary-item"><span class="label">Ingresos</span><span id="total-ingresos" class="value">COP 0</span></div>
+      <div class="summary-item"><span class="label">Gastos</span><span id="total-gastos" class="value">COP 0</span></div>
+      <div class="summary-item"><span class="label">Saldo</span><span id="saldo-neto" class="value">COP 0</span></div>
+    </div>
+    <div class="list-header">
+      <span>Fecha</span><span>Categoria</span><span>Descripcion</span><span>Monto</span><span></span>
+    </div>
+    <ul id="list-movimientos"></ul>
+    <button id="btn-add" class="fab">+</button>
+  </div>
+
+  <div id="modal-registro" class="modal">
+    <div class="modal-box">
+      <div class="modal-header"><h2>Nuevo movimiento</h2><button class="close-btn" id="close-registro">&#10005;</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Monto (COP)</label><input type="tel" id="inp-amount" inputmode="numeric" placeholder="50000"></div>
+        <div class="form-group"><label>Tipo</label>
+          <div class="type-buttons">
+            <button class="type-btn btn-ingreso active" id="btn-ingreso">+ Ingreso</button>
+            <button class="type-btn btn-gasto" id="btn-gasto">- Gasto</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="cat-label-row"><label>Categoria</label><button class="gear-btn" id="btn-gear">&#9881; Gestionar</button></div>
+          <select id="inp-category"></select>
+        </div>
+        <div class="form-group"><label>Descripcion</label><input type="text" id="inp-description" maxlength="80" placeholder="Ej: Gasolina moto"></div>
+      </div>
+      <div class="modal-footer"><button class="btn-secundario" id="btn-cancelar">Cancelar</button><button class="btn-primario" id="btn-guardar">Guardar</button></div>
+    </div>
+  </div>
+
+  <div id="modal-categorias" class="modal">
+    <div class="modal-box">
+      <div class="modal-header"><h2>Gestionar categorias</h2><button class="close-btn" id="close-categorias">&#10005;</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Nueva categoria</label>
+          <div class="add-cat-row"><input type="text" id="inp-new-cat" placeholder="Ej: Entretenimiento" maxlength="30"><button class="btn-success" id="btn-agregar-cat">+ Agregar</button></div>
+        </div>
+        <div class="form-group"><label>Categorias (arrastra para reordenar)</label><div id="cat-list"></div></div>
+      </div>
+      <div class="modal-footer"><button class="btn-primario" id="close-categorias-2">Listo</button></div>
+    </div>
+  </div>
+
+  <div id="modal-confirmar" class="modal">
+    <div class="modal-box modal-box-sm">
+      <div class="modal-header"><h2>¿Eliminar registro?</h2><button class="close-btn" id="close-confirmar">&#10005;</button></div>
+      <div class="modal-body">
+        <div id="confirm-detail" class="confirm-detail"></div>
+        <p class="confirm-msg">Esta accion no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer"><button class="btn-secundario" id="btn-no-eliminar">Cancelar</button><button class="btn-danger" id="btn-si-eliminar">Si, eliminar</button></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
