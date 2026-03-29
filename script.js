@@ -253,18 +253,14 @@ function startRecording(){
 function stopRecording(){ if(recognition) recognition.stop(); }
 
 function extraerJSON(texto) {
-  // Intento 1: parsear directo
   try { return JSON.parse(texto); } catch(e){}
-  // Intento 2: limpiar markdown y reintentar
   var limpio = texto.replace(/```json/gi,'').replace(/```/g,'').trim();
   try { return JSON.parse(limpio); } catch(e){}
-  // Intento 3: extraer entre { } y reintentar
   var start = limpio.indexOf('{');
   var end = limpio.lastIndexOf('}');
   if(start !== -1 && end !== -1){
     var bloque = limpio.substring(start, end+1).replace(/[\r\n\t]/g,' ');
     try { return JSON.parse(bloque); } catch(e){}
-    // Intento 4: reparar comillas escapadas y caracteres raros
     var reparado = bloque
       .replace(/[\u2018\u2019]/g,"'")
       .replace(/[\u201C\u201D]/g,'"')
@@ -296,7 +292,6 @@ function processWithGemini(transcript){
     if(data.error) throw new Error(data.error.message);
     if(!data.candidates||!data.candidates[0]||!data.candidates[0].content)
       throw new Error('Respuesta vacía de Gemini');
-    // Iterar todos los parts buscando el JSON
     var parts = data.candidates[0].content.parts || [];
     var raw = '';
     for(var i=0; i<parts.length; i++){
@@ -316,6 +311,26 @@ function processWithGemini(transcript){
     document.getElementById('voice-status').textContent='❌ Error: '+err.message;
   });
 }
+
+function showVoiceResult(data){
+  document.getElementById('voice-status').textContent='✅ Confirma el registro:';
+  var box=document.getElementById('voice-result-box');
+  box.style.display='block';
+  box.innerHTML=
+    '<div class="voice-result">'+
+    '<div class="vr-row"><span class="vr-label">Tipo</span><span class="vr-value" style="color:'+(data.type==='ingreso'?'var(--green)':'var(--red)')+'">'+( data.type==='ingreso'?'+ Ingreso':'- Gasto')+'</span></div>'+
+    '<div class="vr-row"><span class="vr-label">Monto</span><span class="vr-value">COP '+Number(data.amount).toLocaleString('es-CO')+'</span></div>'+
+    '<div class="vr-row"><span class="vr-label">Categoría</span><span class="vr-value">'+escHtml(data.category)+'</span></div>'+
+    '<div class="vr-row"><span class="vr-label">Descripción</span><span class="vr-value">'+escHtml(data.description)+'</span></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:12px;margin-top:4px;">'+
+    '<button id="btn-cancel-voice" class="btn-secundario">Cancelar</button>'+
+    '<button id="btn-confirm-voice" class="btn-primario">Guardar</button>'+
+    '</div>';
+  document.getElementById('btn-cancel-voice').addEventListener('click',function(){closeModal('modal-voz');});
+  document.getElementById('btn-confirm-voice').addEventListener('click',function(){saveVoiceMovement(data);});
+}
+
 function saveVoiceMovement(data){
   if(!data.amount||data.amount<=0){alert('No se detectó un monto válido.');return;}
   movements.push({id:Date.now(),amount:Number(data.amount),type:data.type,category:data.category,description:data.description,date:new Date().toISOString()});
