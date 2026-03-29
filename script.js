@@ -277,14 +277,18 @@ function extraerJSON(texto) {
 
 function processWithGemini(transcript){
   var catList=categories.join(', ');
-  var prompt='Eres un asistente de finanzas. Analiza este texto en español y responde SOLO con JSON puro, sin markdown, sin explicaciones.\n\nTexto: "'+transcript+'"\n\nCategorías: '+catList+'\n\nFormato exacto de respuesta:\n{"type":"gasto","amount":23200,"category":"Otros","description":"cambio aceite moto"}\n\nReglas:\n- type: solo "gasto" o "ingreso"\n- amount: número entero sin comas ni puntos (23200 no 23,200)\n- category: la más cercana de la lista\n- description: máximo 4 palabras\n- SIN caracteres especiales en description';
+  var prompt='Eres un asistente de finanzas. Analiza este texto en español y responde SOLO con JSON puro, sin markdown, sin explicaciones.\n\nTexto: "'+transcript+'"\n\nCategorías: '+catList+'\n\nFormato exacto:\n{"type":"gasto","amount":23200,"category":"Otros","description":"cambio aceite moto"}\n\nReglas:\n- type: solo "gasto" o "ingreso"\n- amount: número entero sin comas ni puntos\n- category: la más cercana de la lista\n- description: máximo 4 palabras sin caracteres especiales';
 
   fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+geminiKey,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       contents:[{parts:[{text:prompt}]}],
-      generationConfig:{temperature:0.1,maxOutputTokens:150}
+      generationConfig:{
+        temperature:0.1,
+        maxOutputTokens:300,
+        thinkingConfig:{thinkingBudget:0}
+      }
     })
   })
   .then(function(r){ return r.json(); })
@@ -292,21 +296,26 @@ function processWithGemini(transcript){
     if(data.error) throw new Error(data.error.message);
     if(!data.candidates||!data.candidates[0]||!data.candidates[0].content)
       throw new Error('Respuesta vacía de Gemini');
-    var raw = data.candidates[0].content.parts[0].text.trim();
-    // TEMPORAL: mostrar respuesta cruda
-    alert('GEMINI DIJO:\n' + raw);
+    // Iterar todos los parts buscando el JSON
+    var parts = data.candidates[0].content.parts || [];
+    var raw = '';
+    for(var i=0; i<parts.length; i++){
+      if(parts[i].text && parts[i].text.trim().length > 0){
+        raw = parts[i].text.trim();
+      }
+    }
+    if(!raw) throw new Error('Gemini no devolvió texto. Intenta de nuevo.');
     var parsed = extraerJSON(raw);
-    if(!parsed) throw new Error('No se pudo leer la respuesta de Gemini. Intenta de nuevo.');
+    if(!parsed) throw new Error('No se pudo leer la respuesta. Intenta de nuevo.');
     parsed.amount = parseFloat(String(parsed.amount).replace(/[^0-9.]/g,'')) || 0;
     if(!parsed.type||!parsed.category||!parsed.description)
-      throw new Error('Respuesta incompleta de Gemini. Intenta de nuevo.');
+      throw new Error('Respuesta incompleta. Intenta de nuevo.');
     showVoiceResult(parsed);
   })
   .catch(function(err){
     document.getElementById('voice-status').textContent='❌ Error: '+err.message;
   });
 }
-
 function saveVoiceMovement(data){
   if(!data.amount||data.amount<=0){alert('No se detectó un monto válido.');return;}
   movements.push({id:Date.now(),amount:Number(data.amount),type:data.type,category:data.category,description:data.description,date:new Date().toISOString()});
