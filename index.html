@@ -24,6 +24,9 @@
         <button class="day-btn" id="btn-buscar-dia">Buscar día</button>
       </div>
     </div>
+
+    <div id="key-banner" class="key-banner"></div>
+
     <div class="summary">
       <div class="summary-item"><span class="label">Ingresos</span><span id="total-ingresos" class="value">COP 0</span></div>
       <div class="summary-item"><span class="label">Gastos</span><span id="total-gastos" class="value">COP 0</span></div>
@@ -33,9 +36,14 @@
       <span>Fecha</span><span>Categoria</span><span>Descripcion</span><span>Monto</span><span></span>
     </div>
     <ul id="list-movimientos"></ul>
-    <button id="btn-add" class="fab">+</button>
+
+    <div class="fab-group">
+      <button class="fab-voice" id="btn-voice" title="Registrar con voz">🎙️</button>
+      <button class="fab" id="btn-add" title="Registrar manual">+</button>
+    </div>
   </div>
 
+  <!-- MODAL: Registro manual -->
   <div id="modal-registro" class="modal">
     <div class="modal-box">
       <div class="modal-header"><h2>Nuevo movimiento</h2><button class="close-btn" id="close-registro">&#10005;</button></div>
@@ -57,6 +65,7 @@
     </div>
   </div>
 
+  <!-- MODAL: Gestionar categorias -->
   <div id="modal-categorias" class="modal">
     <div class="modal-box">
       <div class="modal-header"><h2>Gestionar categorias</h2><button class="close-btn" id="close-categorias">&#10005;</button></div>
@@ -70,6 +79,7 @@
     </div>
   </div>
 
+  <!-- MODAL: Confirmar eliminación -->
   <div id="modal-confirmar" class="modal">
     <div class="modal-box modal-box-sm">
       <div class="modal-header"><h2>¿Eliminar registro?</h2><button class="close-btn" id="close-confirmar">&#10005;</button></div>
@@ -78,6 +88,45 @@
         <p class="confirm-msg">Esta accion no se puede deshacer.</p>
       </div>
       <div class="modal-footer"><button class="btn-secundario" id="btn-no-eliminar">Cancelar</button><button class="btn-danger" id="btn-si-eliminar">Si, eliminar</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL: API Key -->
+  <div id="modal-apikey" class="modal">
+    <div class="modal-box modal-box-sm">
+      <div class="modal-header"><h2>🔑 Gemini API Key</h2><button class="close-btn" id="close-apikey">&#10005;</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Pega tu API Key de Google AI Studio</label>
+          <input type="password" id="inp-apikey" placeholder="AIzaSy...">
+        </div>
+        <p style="color:var(--muted);font-size:0.82rem;margin-bottom:8px;">
+          Obtén tu key gratis en <strong>aistudio.google.com</strong> → Get API Key.<br>
+          Se guarda solo en tu dispositivo, nunca se envía a ningún servidor.
+        </p>
+      </div>
+      <div class="modal-footer"><button class="btn-primario" id="btn-save-key">Guardar Key</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Voz -->
+  <div id="modal-voz" class="modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>🎙️ Registrar con voz</h2>
+        <button class="close-btn" id="close-voz">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="voice-transcript">
+          <span class="label-t">Lo que dijiste:</span>
+          <span id="voice-transcript"></span>
+        </div>
+        <p class="voice-status" id="voice-status"></p>
+        <div id="voice-result-box" style="display:none;"></div>
+        <div style="text-align:center;margin-top:8px;">
+          <button class="btn-secundario" id="btn-retry-voice" style="display:inline-block;padding:10px 24px;border-radius:50px;">🎙️ Grabar de nuevo</button>
+        </div>
+      </div>
     </div>
   </div>
 
