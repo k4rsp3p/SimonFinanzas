@@ -1,5 +1,3 @@
-
-// Limpiar service workers viejos
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
     regs.forEach(r => r.unregister());
@@ -7,7 +5,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
 }
 
-// ─── ESTADO ──────────────────────────────────────────────
 var movements    = JSON.parse(localStorage.getItem('movements'))  || [];
 var categories   = JSON.parse(localStorage.getItem('categories')) || ['Gasolina','Comida','Ingreso','Transporte','Otros'];
 var currentMonth = new Date();
@@ -20,7 +17,6 @@ var recognition  = null;
 var isRecording  = false;
 var lastTranscript = '';
 
-// ─── HELPERS ─────────────────────────────────────────────
 function save() {
   localStorage.setItem('movements',  JSON.stringify(movements));
   localStorage.setItem('categories', JSON.stringify(categories));
@@ -31,7 +27,6 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-// ─── RENDER PRINCIPAL ─────────────────────────────────────
 function renderMovimientos() {
   var key = getMonthKey(currentMonth);
   var movs = movements.filter(function(m){ return getMonthKey(new Date(m.date))===key; });
@@ -63,7 +58,6 @@ function renderMovimientos() {
   });
 }
 
-// ─── CATEGORIAS SELECT ────────────────────────────────────
 function renderCategorySelect(selId) {
   var sel=document.getElementById(selId), prev=sel.value;
   sel.innerHTML='';
@@ -73,7 +67,6 @@ function renderCategorySelect(selId) {
   if(categories.includes(prev)) sel.value=prev;
 }
 
-// ─── CATEGORIAS LISTA ─────────────────────────────────────
 function renderCatList() {
   var container=document.getElementById('cat-list'); container.innerHTML='';
   categories.forEach(function(cat,i){
@@ -99,7 +92,6 @@ function renderCatList() {
   });
 }
 
-// ─── ELIMINAR CON CONFIRMACION ────────────────────────────
 function confirmarEliminar(id) {
   var m=movements.find(function(x){return x.id===id;}); if(!m) return;
   pendingDeleteId=id;
@@ -121,7 +113,6 @@ document.getElementById('btn-si-eliminar').addEventListener('click',function(){
 document.getElementById('btn-no-eliminar').addEventListener('click',function(){pendingDeleteId=null;closeModal('modal-confirmar');});
 document.getElementById('close-confirmar').addEventListener('click',function(){pendingDeleteId=null;closeModal('modal-confirmar');});
 
-// ─── MODAL REGISTRO MANUAL ────────────────────────────────
 document.getElementById('btn-add').addEventListener('click',function(){
   document.getElementById('inp-amount').value='';
   document.getElementById('inp-description').value='';
@@ -154,7 +145,6 @@ document.getElementById('btn-guardar').addEventListener('click',function(){
   save(); closeModal('modal-registro'); renderMovimientos();
 });
 
-// ─── MODAL CATEGORIAS ─────────────────────────────────────
 document.getElementById('btn-gear').addEventListener('click',function(){renderCatList();openModal('modal-categorias');});
 document.getElementById('close-categorias').addEventListener('click',function(){closeModal('modal-categorias');});
 document.getElementById('close-categorias-2').addEventListener('click',function(){closeModal('modal-categorias');});
@@ -167,7 +157,6 @@ function agregarCat(){
   categories.push(name); inp.value=''; save(); renderCatList(); renderCategorySelect('inp-category');
 }
 
-// ─── FILTRO DÍA ───────────────────────────────────────────
 document.getElementById('btn-todo-mes').addEventListener('click',function(){
   filterDay=null; document.getElementById('inp-dia').value='';
   document.getElementById('btn-todo-mes').classList.add('active');
@@ -184,7 +173,6 @@ document.getElementById('btn-buscar-dia').addEventListener('click',function(){
 });
 document.getElementById('inp-dia').addEventListener('keypress',function(e){if(e.key==='Enter')document.getElementById('btn-buscar-dia').click();});
 
-// ─── MESES ────────────────────────────────────────────────
 function cambiarMes(delta){
   currentMonth=new Date(currentMonth.getFullYear(),currentMonth.getMonth()+delta);
   filterDay=null; document.getElementById('inp-dia').value='';
@@ -195,7 +183,6 @@ function cambiarMes(delta){
 document.getElementById('btn-prev').addEventListener('click',function(){cambiarMes(-1);});
 document.getElementById('btn-next').addEventListener('click',function(){cambiarMes(1);});
 
-// ─── API KEY ──────────────────────────────────────────────
 function renderKeyStatus() {
   var banner=document.getElementById('key-banner');
   if(geminiKey){
@@ -220,7 +207,6 @@ document.getElementById('btn-save-key').addEventListener('click',function(){
 });
 document.getElementById('close-apikey').addEventListener('click',function(){closeModal('modal-apikey');});
 
-// ─── VOZ ──────────────────────────────────────────────────
 document.getElementById('btn-voice').addEventListener('click',function(){
   if(!geminiKey){openModal('modal-apikey');return;}
   if(isRecording){stopRecording();return;}
@@ -270,7 +256,7 @@ function processWithGemini(transcript){
   var catList=categories.join(', ');
   var prompt='Eres un asistente de finanzas personales. Analiza este texto en español y extrae la información de un movimiento financiero.\n\nTexto: "'+transcript+'"\n\nCategorías disponibles: '+catList+'\n\nResponde ÚNICAMENTE con un JSON válido con esta estructura (sin markdown, sin explicaciones):\n{"type":"gasto o ingreso","amount":número,"category":"categoría","description":"descripción corta"}\n\nReglas:\n- gasté/pagué/compré → gasto. recibí/gané/me pagaron → ingreso\n- Convierte palabras a números: cincuenta mil → 50000\n- Si no hay monto claro pon 0\n- Usa la categoría más cercana de la lista';
 
-  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key='+geminiKey,{
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+geminiKey,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
@@ -330,7 +316,6 @@ document.getElementById('btn-retry-voice').addEventListener('click',function(){
   startRecording();
 });
 
-// ─── INICIO ───────────────────────────────────────────────
 renderMovimientos();
 renderCategorySelect('inp-category');
 renderKeyStatus();
