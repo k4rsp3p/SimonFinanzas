@@ -254,9 +254,9 @@ function stopRecording(){ if(recognition) recognition.stop(); }
 
 function processWithGemini(transcript){
   var catList=categories.join(', ');
-  var prompt='Eres un asistente de finanzas personales. Analiza este texto en español y extrae la información de un movimiento financiero.\n\nTexto: "'+transcript+'"\n\nCategorías disponibles: '+catList+'\n\nResponde ÚNICAMENTE con un JSON válido con esta estructura exacta (sin markdown, sin bloques de código, sin explicaciones, solo el JSON puro):\n{"type":"gasto","amount":23200,"category":"Gasolina","description":"cambio de aceite"}\n\nReglas:\n- gasté/pagué/compré/gasto → type:gasto. recibí/gané/me pagaron/ingreso → type:ingreso\n- Convierte palabras a números: cincuenta mil → 50000, 23,200 → 23200\n- El amount debe ser un número entero SIN puntos NI comas NI comillas\n- Si no hay monto claro pon 0\n- Usa la categoría más cercana de la lista\n- description debe ser texto corto sin caracteres especiales ni comillas';
+  var prompt='Eres un asistente de finanzas personales. Analiza este texto en español y extrae la información de un movimiento financiero.\n\nTexto: "'+transcript+'"\n\nCategorías disponibles: '+catList+'\n\nResponde ÚNICAMENTE con un JSON válido con esta estructura exacta (sin markdown, sin bloques de código, sin explicaciones, solo el JSON puro):\n{"type":"gasto","amount":23200,"category":"Gasolina","description":"cambio de aceite"}\n\nReglas:\n- gasté/pagué/compré/gasto → type:gasto. recibí/gané/me pagaron/ingreso → type:ingreso\n- Convierte palabras a números: cincuenta mil → 50000, 23200\n- El amount debe ser un número entero SIN puntos NI comas NI comillas\n- Si no hay monto claro pon 0\n- Usa la categoría más cercana de la lista\n- description debe ser texto corto sin caracteres especiales ni comillas';
 
-  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+geminiKey,{
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+geminiKey,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
@@ -266,23 +266,25 @@ function processWithGemini(transcript){
   })
   .then(function(r){return r.json();})
   .then(function(data){
+    console.log('Gemini raw response:', JSON.stringify(data));
     if(data.error) throw new Error(data.error.message);
+    if(!data.candidates||!data.candidates[0]||!data.candidates[0].content){
+      throw new Error('Respuesta vacía de Gemini. Verifica tu API Key o cuota.');
+    }
     var raw=data.candidates[0].content.parts[0].text.trim();
-    // Limpieza agresiva: extraer solo el bloque JSON
+    console.log('Gemini text:', raw);
     var clean=raw.replace(/```json/gi,'').replace(/```/g,'').trim();
-    // Buscar el primer { y último } para extraer solo el JSON
     var start=clean.indexOf('{');
     var end=clean.lastIndexOf('}');
     if(start===-1||end===-1) throw new Error('No se encontró JSON en la respuesta');
     clean=clean.substring(start,end+1);
-    // Sanitizar: eliminar saltos de línea dentro del JSON que puedan romper strings
     clean=clean.replace(/[\r\n\t]/g,' ');
     var parsed=JSON.parse(clean);
-    // Asegurarse que amount sea número
     parsed.amount=parseFloat(String(parsed.amount).replace(/[^0-9.]/g,''))||0;
     showVoiceResult(parsed);
   })
   .catch(function(err){
+    console.log('Error completo:', err);
     document.getElementById('voice-status').textContent='❌ Error: '+err.message;
   });
 }
