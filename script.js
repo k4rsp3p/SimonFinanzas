@@ -284,10 +284,7 @@ function processWithGemini(transcript){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       contents:[{parts:[{text:prompt}]}],
-      generationConfig:{
-        temperature:0.1,
-        maxOutputTokens:150
-      }
+      generationConfig:{temperature:0.1,maxOutputTokens:150}
     })
   })
   .then(function(r){ return r.json(); })
@@ -296,6 +293,8 @@ function processWithGemini(transcript){
     if(!data.candidates||!data.candidates[0]||!data.candidates[0].content)
       throw new Error('Respuesta vacía de Gemini');
     var raw = data.candidates[0].content.parts[0].text.trim();
+    // TEMPORAL: mostrar respuesta cruda
+    alert('GEMINI DIJO:\n' + raw);
     var parsed = extraerJSON(raw);
     if(!parsed) throw new Error('No se pudo leer la respuesta de Gemini. Intenta de nuevo.');
     parsed.amount = parseFloat(String(parsed.amount).replace(/[^0-9.]/g,'')) || 0;
@@ -306,25 +305,6 @@ function processWithGemini(transcript){
   .catch(function(err){
     document.getElementById('voice-status').textContent='❌ Error: '+err.message;
   });
-}
-
-function showVoiceResult(data){
-  document.getElementById('voice-status').textContent='✅ Confirma el registro:';
-  var box=document.getElementById('voice-result-box');
-  box.style.display='block';
-  box.innerHTML=
-    '<div class="voice-result">'+
-    '<div class="vr-row"><span class="vr-label">Tipo</span><span class="vr-value" style="color:'+(data.type==='ingreso'?'var(--green)':'var(--red)')+'">'+( data.type==='ingreso'?'+ Ingreso':'- Gasto')+'</span></div>'+
-    '<div class="vr-row"><span class="vr-label">Monto</span><span class="vr-value">COP '+Number(data.amount).toLocaleString('es-CO')+'</span></div>'+
-    '<div class="vr-row"><span class="vr-label">Categoría</span><span class="vr-value">'+escHtml(data.category)+'</span></div>'+
-    '<div class="vr-row"><span class="vr-label">Descripción</span><span class="vr-value">'+escHtml(data.description)+'</span></div>'+
-    '</div>'+
-    '<div style="display:flex;gap:12px;margin-top:4px;">'+
-    '<button id="btn-cancel-voice" class="btn-secundario">Cancelar</button>'+
-    '<button id="btn-confirm-voice" class="btn-primario">Guardar</button>'+
-    '</div>';
-  document.getElementById('btn-cancel-voice').addEventListener('click',function(){closeModal('modal-voz');});
-  document.getElementById('btn-confirm-voice').addEventListener('click',function(){saveVoiceMovement(data);});
 }
 
 function saveVoiceMovement(data){
