@@ -41,7 +41,7 @@ function renderMovimientos() {
   ul.innerHTML = '';
   if (movs.length===0) {
     var li=document.createElement('li');
-    li.innerHTML='<span class="empty-msg">Sin movimientos'+(filterDay?' el día '+filterDay:'')+'</span>';
+    li.innerHTML='<span class="empty-msg">Sin movimientos'+(filterDay?' el dia '+filterDay:'')+'</span>';
     ul.appendChild(li); return;
   }
   movs.sort(function(a,b){return new Date(b.date)-new Date(a.date);}).forEach(function(m) {
@@ -99,8 +99,8 @@ function confirmarEliminar(id) {
   document.getElementById('confirm-detail').innerHTML=
     '<strong>'+(m.type==='ingreso'?'+ Ingreso':'- Gasto')+'</strong><br>'+
     'Monto: COP '+m.amount.toLocaleString('es-CO')+'<br>'+
-    'Categoría: '+escHtml(m.category)+'<br>'+
-    'Descripción: '+escHtml(m.description||'—')+'<br>'+
+    'Categoria: '+escHtml(m.category)+'<br>'+
+    'Descripcion: '+escHtml(m.description||'---')+'<br>'+
     'Fecha: '+day;
   openModal('modal-confirmar');
 }
@@ -165,7 +165,7 @@ document.getElementById('btn-todo-mes').addEventListener('click',function(){
 });
 document.getElementById('btn-buscar-dia').addEventListener('click',function(){
   var val=parseInt(document.getElementById('inp-dia').value);
-  if(isNaN(val)||val<1||val>31){alert('Ingresa un día válido entre 1 y 31');return;}
+  if(isNaN(val)||val<1||val>31){alert('Ingresa un dia valido entre 1 y 31');return;}
   filterDay=val;
   document.getElementById('btn-buscar-dia').classList.add('active');
   document.getElementById('btn-todo-mes').classList.remove('active');
@@ -200,10 +200,10 @@ function renderKeyStatus() {
 }
 document.getElementById('btn-save-key').addEventListener('click',function(){
   var k=document.getElementById('inp-apikey').value.trim();
-  if(!k){alert('Ingresa una API Key válida');return;}
+  if(!k){alert('Ingresa una API Key valida');return;}
   geminiKey=k; localStorage.setItem('geminiKey',k);
   closeModal('modal-apikey'); renderKeyStatus();
-  alert('✅ API Key guardada correctamente');
+  alert('API Key guardada correctamente');
 });
 document.getElementById('close-apikey').addEventListener('click',function(){closeModal('modal-apikey');});
 
@@ -224,7 +224,7 @@ function startRecording(){
   lastTranscript='';
   document.getElementById('btn-voice').classList.add('recording');
   document.getElementById('voice-transcript-text').textContent='';
-  document.getElementById('voice-status').textContent='🎙️ Escuchando... habla ahora';
+  document.getElementById('voice-status').textContent='Escuchando... habla ahora';
   document.getElementById('voice-result-box').style.display='none';
   openModal('modal-voz');
   recognition.onresult=function(e){
@@ -236,10 +236,10 @@ function startRecording(){
     isRecording=false;
     document.getElementById('btn-voice').classList.remove('recording');
     if(lastTranscript){
-      document.getElementById('voice-status').textContent='⏳ Procesando con Gemini...';
+      document.getElementById('voice-status').textContent='Procesando con Gemini...';
       processWithGemini(lastTranscript);
     } else {
-      document.getElementById('voice-status').textContent='No se detectó voz. Intenta de nuevo.';
+      document.getElementById('voice-status').textContent='No se detecto voz. Intenta de nuevo.';
     }
   };
   recognition.onerror=function(e){
@@ -259,39 +259,46 @@ function extraerJSON(texto) {
   var start = limpio.indexOf('{');
   var end = limpio.lastIndexOf('}');
   if(start !== -1 && end !== -1){
-    var bloque = limpio.substring(start, end+1).replace(/[\r\n\t]/g,' ');
+    var bloque = limpio.substring(start, end+1);
+    bloque = bloque.split('\r').join(' ').split('\n').join(' ').split('\t').join(' ');
     try { return JSON.parse(bloque); } catch(e){}
     var reparado = bloque
-      .replace(/[\u2018\u2019]/g,"'")
-      .replace(/[\u201C\u201D]/g,'"')
-      .replace(/,\s*}/g,'}')
-      .replace(/,\s*]/g,']');
+      .split('\u2018').join("'")
+      .split('\u2019').join("'")
+      .split('\u201C').join('"')
+      .split('\u201D').join('"')
+      .replace(/,[ ]*}/g,'}')
+      .replace(/,[ ]*]/g,']');
     try { return JSON.parse(reparado); } catch(e){}
   }
   return null;
 }
 
 function processWithGemini(transcript){
-  var catList=categories.join(', ');
-  var prompt='Eres un asistente de finanzas. Analiza este texto en español y responde SOLO con JSON puro, sin markdown, sin explicaciones.\n\nTexto: "'+transcript+'"\n\nCategorías: '+catList+'\n\nFormato exacto:\n{"type":"gasto","amount":23200,"category":"Otros","description":"cambio aceite moto"}\n\nReglas:\n- type: solo "gasto" o "ingreso"\n- amount: número entero sin comas ni puntos\n- category: la más cercana de la lista\n- description: máximo 4 palabras sin caracteres especiales';
+  var catList = categories.join(', ');
+  var prompt = 'Eres un asistente de finanzas. Analiza este texto en espanol y responde SOLO con JSON puro, sin markdown, sin explicaciones.'
+    + ' Texto: "' + transcript + '"'
+    + ' Categorias disponibles: ' + catList
+    + ' Formato exacto de respuesta: {"type":"gasto","amount":23200,"category":"Otros","description":"cambio aceite moto"}'
+    + ' Reglas: type solo puede ser gasto o ingreso. amount debe ser numero entero sin comas ni puntos. category debe ser la mas cercana de la lista. description maximo 4 palabras sin caracteres especiales.';
 
-  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+geminiKey,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      contents:[{parts:[{text:prompt}]}],
-      generationConfig:{
-        temperature:0.1,
-        maxOutputTokens:300,
-        thinkingConfig:{thinkingBudget:0}
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+geminiKey, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      contents: [{parts: [{text: prompt}]}],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 300,
+        thinkingConfig: {thinkingBudget: 0}
       }
     })
   })
   .then(function(r){ return r.json(); })
   .then(function(data){
     if(data.error) throw new Error(data.error.message);
-    if(!data.candidates||!data.candidates[0]||!data.candidates[0].content)
-      throw new Error('Respuesta vacía de Gemini');
+    if(!data.candidates || !data.candidates[0] || !data.candidates[0].content)
+      throw new Error('Respuesta vacia de Gemini');
     var parts = data.candidates[0].content.parts || [];
     var raw = '';
     for(var i=0; i<parts.length; i++){
@@ -299,29 +306,29 @@ function processWithGemini(transcript){
         raw = parts[i].text.trim();
       }
     }
-    if(!raw) throw new Error('Gemini no devolvió texto. Intenta de nuevo.');
+    if(!raw) throw new Error('Gemini no devolvio texto. Intenta de nuevo.');
     var parsed = extraerJSON(raw);
-    if(!parsed) throw new Error('No se pudo leer la respuesta. Intenta de nuevo.');
+    if(!parsed) throw new Error('Error al leer: ' + raw.substring(0,80));
     parsed.amount = parseFloat(String(parsed.amount).replace(/[^0-9.]/g,'')) || 0;
-    if(!parsed.type||!parsed.category||!parsed.description)
+    if(!parsed.type || !parsed.category || !parsed.description)
       throw new Error('Respuesta incompleta. Intenta de nuevo.');
     showVoiceResult(parsed);
   })
   .catch(function(err){
-    document.getElementById('voice-status').textContent='❌ Error: '+err.message;
+    document.getElementById('voice-status').textContent = 'Error: ' + err.message;
   });
 }
 
 function showVoiceResult(data){
-  document.getElementById('voice-status').textContent='✅ Confirma el registro:';
+  document.getElementById('voice-status').textContent='Confirma el registro:';
   var box=document.getElementById('voice-result-box');
   box.style.display='block';
   box.innerHTML=
     '<div class="voice-result">'+
-    '<div class="vr-row"><span class="vr-label">Tipo</span><span class="vr-value" style="color:'+(data.type==='ingreso'?'var(--green)':'var(--red)')+'">'+( data.type==='ingreso'?'+ Ingreso':'- Gasto')+'</span></div>'+
+    '<div class="vr-row"><span class="vr-label">Tipo</span><span class="vr-value" style="color:'+(data.type==='ingreso'?'var(--green)':'var(--red)')+'">'+(data.type==='ingreso'?'+ Ingreso':'- Gasto')+'</span></div>'+
     '<div class="vr-row"><span class="vr-label">Monto</span><span class="vr-value">COP '+Number(data.amount).toLocaleString('es-CO')+'</span></div>'+
-    '<div class="vr-row"><span class="vr-label">Categoría</span><span class="vr-value">'+escHtml(data.category)+'</span></div>'+
-    '<div class="vr-row"><span class="vr-label">Descripción</span><span class="vr-value">'+escHtml(data.description)+'</span></div>'+
+    '<div class="vr-row"><span class="vr-label">Categoria</span><span class="vr-value">'+escHtml(data.category)+'</span></div>'+
+    '<div class="vr-row"><span class="vr-label">Descripcion</span><span class="vr-value">'+escHtml(data.description)+'</span></div>'+
     '</div>'+
     '<div style="display:flex;gap:12px;margin-top:4px;">'+
     '<button id="btn-cancel-voice" class="btn-secundario">Cancelar</button>'+
@@ -332,7 +339,7 @@ function showVoiceResult(data){
 }
 
 function saveVoiceMovement(data){
-  if(!data.amount||data.amount<=0){alert('No se detectó un monto válido.');return;}
+  if(!data.amount||data.amount<=0){alert('No se detecto un monto valido.');return;}
   movements.push({id:Date.now(),amount:Number(data.amount),type:data.type,category:data.category,description:data.description,date:new Date().toISOString()});
   save(); closeModal('modal-voz'); renderMovimientos(); lastTranscript='';
 }
